@@ -1,0 +1,169 @@
+---
+title: "Helpdesk_tickets"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(reader)
+```
+```{r}
+setwd(dir = "C:/Users/roxan/Desktop/Work experience")
+helpdesk_tickets<- read.csv("C:/Users/roxan/Desktop/Work experience/helpdesk_tickets.csv",  stringsAsFactors=FALSE)
+View(helpdesk_tickets)
+```
+
+```{r}
+summary(helpdesk_tickets)
+```
+```{r}
+## remove NA variables
+helpdesk_tickets <- select(helpdesk_tickets, -Team.Lead,-X, -SR.No.,-Corrective.Actions,-Preventive.Actions,-Closed.By,-Category, -Issue.Origin )
+summary(helpdesk_tickets)
+```
+
+```{r}
+##rename variable
+names(helpdesk_tickets)[1]<-"Ticket.Number"
+names(helpdesk_tickets)[19] <-"Ticket.Update"
+summary(helpdesk_tickets)
+```
+```{r}
+##remove from Ticket.number the min value 2 as it has missing numbers as all of them are made of 6 numbers
+helpdesk_tickets<- helpdesk_tickets[-508,]
+summary(helpdesk_tickets)
+str(helpdesk_tickets)
+```
+```{r}
+##change how the data is stored
+helpdesk_tickets$Priority<-as.factor(helpdesk_tickets$Priority)
+helpdesk_tickets$Ticket.Update<-as.factor(helpdesk_tickets$Ticket.Update)
+helpdesk_tickets$Type<-as.factor(helpdesk_tickets$Type)
+helpdesk_tickets$Current.Status<-as.factor(helpdesk_tickets$Current.Status)
+str(helpdesk_tickets)
+```
+
+
+```{r}
+##to check for any missing data-no missing data
+complete.cases(helpdesk_tickets)
+```
+```{r}
+## removing any observation with missing data
+new_data<-na.omit(helpdesk_tickets)
+dim(new_data)
+View(new_data)
+```
+```{r}
+##removing duplicates
+df<-new_data
+helpdesk_tickets_cleaned<-df[!duplicated(df$Ticket.Number), ]
+str(helpdesk_tickets_cleaned)
+```
+```{r}
+##change values in columns to capital letter
+names(helpdesk_tickets_cleaned$Subject) <- toupper(names(helpdesk_tickets_cleaned$Subject))
+```
+
+```{r}
+##replacing missing values in Due.Date with Last.Updated as it can be seen in the Answered column the problem has been resolved
+helpdesk_tickets_cleaned$Due.Date <- ifelse(test = helpdesk_tickets_cleaned$Due.Date != "", yes = helpdesk_tickets_cleaned$Due.Date, no = helpdesk_tickets_cleaned$Last.Updated)
+save(helpdesk_tickets_cleaned, file = "helpdesk_tickets_cleaned.Rdata") 
+```
+```{r}
+##checking for missing values
+is.na(helpdesk_tickets_cleaned)
+```
+```{r}
+##remove last row as it has a missing value in Ticket.Update
+helpdesk_tickets_cleaned<- head(helpdesk_tickets_cleaned, -1)
+```
+
+```{r}
+##using histograms and boxplots to check for outliers
+hist(helpdesk_tickets_cleaned$Overdue)
+```
+```{r}
+hist(helpdesk_tickets_cleaned$Answered)
+```
+```{r}
+hist(helpdesk_tickets_cleaned$Thread.Count)
+hist(helpdesk_tickets_cleaned$Attachment.Count)
+```
+```{r}
+boxplot(helpdesk_tickets_cleaned$Thread.Count)
+```
+```{r}
+##remove outliers from Thread.Count
+Q1 <- quantile(helpdesk_tickets_cleaned$Thread.Count, .25)
+Q3 <- quantile(helpdesk_tickets_cleaned$Thread.Count, .75)
+IQR <-IQR(helpdesk_tickets_cleaned$Thread.Count)
+helpdesk_tickets_cleaned <- subset(helpdesk_tickets_cleaned, helpdesk_tickets_cleaned$Thread.Count >(Q1 - 1.5*IQR) & helpdesk_tickets_cleaned$Thread.Count< (Q3 + 1.5*IQR))
+dim(helpdesk_tickets_cleaned)
+
+```
+```{r}
+##export cleaned dataset
+save(helpdesk_tickets_cleaned, file = "helpdesk_tickets_cleaned.Rdata")
+```
+
+
+```{r}
+write.csv(helpdesk_tickets_cleaned, file="C:/Users/roxan/Desktop/Work experience/helpdesk_tickets_cleaned.csv")
+View (helpdesk_tickets_cleaned)
+
+```
+```{r}
+##sort Ticket.Number in ascending order
+helpdesk_tickets_new <- arrange(helpdesk_tickets_cleaned, Ticket.Number)
+```
+```{r}
+##Total sum of helpdesk tickets From
+aggregate(helpdesk_tickets_new$Ticket.Number, by=list(helpdesk_tickets_new$From), FUN=length)
+```
+```{r}
+##Total sum of helpdesk tickets per Priority
+aggregate(helpdesk_tickets_new$Ticket.Number, by=list(helpdesk_tickets_new$Priority), FUN=length)
+```
+```{r}
+##Total sum of helpdesk tickets per Department
+aggregate(helpdesk_tickets_new$Ticket.Number, by=list(helpdesk_tickets_new$Department), FUN=length)
+```
+```{r}
+##Total sum of helpdesk tickets per Type
+aggregate(helpdesk_tickets_new$Ticket.Number, by=list(helpdesk_tickets_new$Type), FUN=length)
+```
+```{r}
+##Total sum of helpdesk tickets per Source
+aggregate(helpdesk_tickets_new$Ticket.Number, by=list(helpdesk_tickets_new$Source), FUN=length)
+```
+```{r}
+##Total sum of helpdesk tickets per Current.Status
+aggregate(helpdesk_tickets_new$Ticket.Number, by=list(helpdesk_tickets_new$Current.Status), FUN=length)
+```
+```{r}
+##Total sum of helpdesk tickets per Agent.Assigned
+aggregate(helpdesk_tickets_new$Ticket.Number, by=list(helpdesk_tickets_new$Agent.Assigned), FUN=length)
+```
+```{r}
+##Total sum of helpdesk tickets per Team.Assigned
+aggregate(helpdesk_tickets_new$Ticket.Number, by=list(helpdesk_tickets_new$Team.Assigned), FUN=length)
+```
+```{r}
+##Total sum of helpdesk tickets per Ticket.Update
+aggregate(helpdesk_tickets_new$Ticket.Number, by=list(helpdesk_tickets_new$Ticket.Update), FUN=length)
+```
+```{r}
+##Total sum of helpdesk tickets per Overdue
+aggregate(helpdesk_tickets_new$Ticket.Number, by=list(helpdesk_tickets_new$Overdue), FUN=length)
+```
+```{r}
+##Total sum of helpdesk tickets per Answered
+aggregate(helpdesk_tickets_new$Ticket.Number, by=list(helpdesk_tickets_new$From), FUN=length)
+```
+
+
+
+
